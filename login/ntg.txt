@@ -1,1 +1,4 @@
-
+python -m venv myenv
+myenv\Scripts\Activate.ps1   
+pip install -r requests.txt
+uvicorn app.main:app --reload --app-dir .
