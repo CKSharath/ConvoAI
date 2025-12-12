@@ -1,0 +1,14 @@
+# Frontend
+Frontend/node_modules/
+Frontend/dist/
+Frontend/.vite/
+Frontend/package-lock.json
+
+# Backend
+Backend/__pycache__/
+Backend/.venv/
+Backend/*.pyc
+
+# OS files
+.DS_Store
+Thumbs.db
