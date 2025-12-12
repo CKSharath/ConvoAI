@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import mission, convoy, hazards, auth, routing, biometric
+from app.routes import mission, convoy, hazards, auth, routing, biometric, summarizer
 from app.sockets import tracker
 from app.database import Base, engine
 from app import models
@@ -20,8 +20,8 @@ app.include_router(mission.router)
 app.include_router(hazards.router)
 app.include_router(convoy.router)
 app.include_router(routing.router)
+app.include_router(summarizer.router)   # ✅ ADD THIS
 app.include_router(tracker.router)
-
 
 @app.get("/")
 def home():
