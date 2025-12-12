@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.database import SessionLocal
 from app import models, schemas
@@ -38,18 +39,19 @@ async def update_position(
         lat=data.lat,
         lng=data.lng,
         speed=data.speed,
-        timestamp="now"
+        timestamp=datetime.utcnow().isoformat()
     )
 
     db.add(pos)
     db.commit()
 
-    # Broadcast to officers/admin monitoring dashboard
+    # Broadcast to officers/admin monitoring dashboard + drivers
     await broadcast_position({
         "mission_id": data.mission_id,
         "lat": data.lat,
         "lng": data.lng,
-        "speed": data.speed
+        "speed": data.speed,
+        "timestamp": pos.timestamp
     })
 
     return {"message": "Position updated"}

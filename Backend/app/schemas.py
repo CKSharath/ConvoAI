@@ -138,3 +138,33 @@ class UserBiometricsOut(BaseModel):
     biometrics: list[BiometricTemplateOut]
 
     model_config = {"from_attributes": True}
+
+
+class SOSTriggerRequest(BaseModel):
+    mission_id: int
+    reason: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+
+class SOSTriggerResponse(BaseModel):
+    id: int
+    mission_id: int
+    triggered_by: int
+    reason: Optional[str]
+    lat: Optional[float]
+    lng: Optional[float]
+    timestamp: str
+    handled: bool
+
+    model_config = {"from_attributes": True}
+
+class IncidentReportOut(BaseModel):
+    id: int
+    mission_id: int
+    generated_by: int
+    content: str
+    summary_score: Optional[float]
+    created_at: str
+
+    model_config = {"from_attributes": True}
+

@@ -80,3 +80,9 @@ async def broadcast_route(data):
                 continue
 
         await client["ws"].send_text(msg)
+# in tracker.py (add below broadcast_route)
+async def broadcast_alert(data):
+    msg = json.dumps({"type": "alert", "data": data})
+    for ws in clients:
+        await ws.send_text(msg)
+

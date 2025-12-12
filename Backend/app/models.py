@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, JSON, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, JSON, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -95,3 +95,33 @@ class BiometricAuthLog(Base):
     confidence = Column(Integer)
     ip_address = Column(String, nullable=True)
     timestamp = Column(DateTime, server_default=func.now())
+
+class SOSEvent(Base):
+    __tablename__ = "sos_events"
+    id = Column(Integer, primary_key=True, index=True)
+    mission_id = Column(Integer, ForeignKey("missions.id"), nullable=False)
+    triggered_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # user id (driver)
+    reason = Column(String, nullable=True)
+    lat = Column(Float, nullable=True)
+    lng = Column(Float, nullable=True)
+    timestamp = Column(DateTime, server_default=func.now())
+    handled = Column(Boolean, default=False)
+    notes = Column(Text, nullable=True)
+
+class IncidentReport(Base):
+    __tablename__ = "incident_reports"
+    id = Column(Integer, primary_key=True, index=True)
+    mission_id = Column(Integer, ForeignKey("missions.id"), nullable=False)
+    generated_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # officer/admin id who requested
+    content = Column(Text, nullable=False)   # text blob of the generated report
+    summary_score = Column(Float, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+class EmailOutbox(Base):
+    __tablename__ = "email_outbox"
+    id = Column(Integer, primary_key=True, index=True)
+    subject = Column(String, nullable=False)
+    recipients = Column(JSON, nullable=False)   # list of emails
+    html_body = Column(Text, nullable=True)
+    sent = Column(Boolean, default=False)       # false if mock / not actually sent
+    created_at = Column(DateTime, server_default=func.now())

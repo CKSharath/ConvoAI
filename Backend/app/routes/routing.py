@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import asyncio
 
 from app.database import SessionLocal
 from app import models, schemas
@@ -9,6 +10,7 @@ from app.routes.auth import (
     require_driver
 )
 from app.services.ml_engine import get_optimized_route
+from app.sockets.tracker import broadcast_route   # ✅ added import
 
 router = APIRouter(prefix="/routing", tags=["Routing"])
 
@@ -24,7 +26,7 @@ def get_db():
 # OFFICER MANUALLY RE-COMPUTES MISSION ROUTE
 # ---------------------------------------------------------
 @router.post("/recompute/{mission_id}", dependencies=[Depends(require_officer)])
-def recompute_route(
+async def recompute_route(
     mission_id: int,
     db: Session = Depends(get_db),
 ):
@@ -33,6 +35,7 @@ def recompute_route(
     if not mission:
         raise HTTPException(404, "Mission not found")
 
+    # Payload sent to ML engine
     payload = {
         "source": mission.source,
         "destination": mission.destination,
@@ -41,12 +44,28 @@ def recompute_route(
 
     new_route = get_optimized_route(payload)
 
+    # Update DB entry
     mission.route = new_route["route"]
     mission.safescore = new_route["safescore"]
     mission.eta = new_route["eta"]
 
     db.commit()
-    return {"message": "Route recomputed", "route": new_route}
+
+    # ------------------------------------------------------------
+    # 🔥 REAL-TIME UPDATE: Broadcast new route to all WebSocket clients
+    # Driver with mission_id receives it, analysts receive it too
+    # ------------------------------------------------------------
+    asyncio.create_task(broadcast_route({
+        "mission_id": mission_id,
+        "route": mission.route,
+        "safescore": mission.safescore,
+        "eta": mission.eta
+    }))
+
+    return {
+        "message": "Route recomputed",
+        "route": new_route
+    }
 
 
 # ---------------------------------------------------------
