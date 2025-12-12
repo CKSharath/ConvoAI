@@ -10,6 +10,7 @@ import './styles/pages/tracking.css'
 import './styles/components/navbar.css'
 import './styles/components/card.css'
 import './styles/components/missionlist.css'
+import './styles/hover-upgrade.css';
 
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>

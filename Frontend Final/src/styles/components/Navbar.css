@@ -1,0 +1,83 @@
+/* NAVBAR CONTAINER */
+.navbar {
+    height: 70px;
+    background-color: #0f1c0f;
+    border-bottom: 2px solid #1f4f1f;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    color: white;
+    font-family: "Arial", sans-serif;
+}
+
+/* LEFT TITLE */
+.app-title {
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #00ff88;
+}
+
+/* NAV LINKS */
+.navbar-middle a {
+    margin: 0 14px;
+    color: #c2ffc2;
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.2s;
+}
+
+.navbar-middle a:hover {
+    color: #00ff88;
+}
+
+/* RIGHT SECTION */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+/* USER ICON */
+.user-box {
+    background-color: #1a331a;
+    padding: 8px 12px;
+    border-radius: 6px;
+    box-shadow: 0 0 5px #0f0;
+}
+
+/* SOS BUTTON */
+.sos-btn {
+    background: #ff1a1a;
+    color: white;
+    padding: 10px 22px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.85);
+    transition: 0.25s ease-in-out;
+    animation: pulseSOS 1.2s infinite alternate;
+}
+
+/* HOVER */
+.sos-btn:hover {
+    background: #ff0000;
+    transform: scale(1.07);
+    box-shadow: 0 0 20px rgba(255, 40, 40, 1);
+}
+
+/* PULSE ANIMATION */
+@keyframes pulseSOS {
+    from {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    }
+
+    to {
+        transform: scale(1.08);
+        box-shadow: 0 0 25px rgba(255, 0, 0, 1);
+    }
+}
