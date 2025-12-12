@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Role-Aware Secure Login</title>
+    <title>COMMAND Secure Access</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Optional: Mirror the video for a natural feel */
@@ -11,45 +11,92 @@
             transform: scaleX(-1); 
             max-width: 100%;
         }
+        /* Custom glow effect for the command center feel */
+        .neon-glow {
+            box-shadow: 0 0 5px #4eff7f, 0 0 10px #10b981; /* Subtle green glow */
+        }
+        .text-neon {
+            color: #4eff7f; /* Neon Green accent color */
+        }
+        .bg-dark-panel {
+            background-color: rgba(0, 255, 65, 0.12); /* Darker than black but not pure black */
+        }
+        /* Placeholder styling to match the neon theme */
+        input::placeholder {
+            color: rgba(78, 255, 127, 0.4); /* Faint neon color */
+        }
     </style>
 </head>
-<body class="bg-gray-900 flex items-center justify-center min-h-screen">
+<body class="bg-black flex items-center justify-center min-h-screen font-mono">
 
-    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
-        <h2 class="text-3xl font-extrabold mb-8 text-center text-gray-800">Secure Access Portal</h2>
+    <div class="bg-dark-panel p-8 rounded-lg border border-green-700/50 w-full max-w-md">
+        <h2 class="text-3xl font-extrabold mb-8 text-center text-neon">COMMAND ACCESS TERMINAL</h2>
         
         <form id="standard-login" class="space-y-6">
             <div>
-                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                <input type="text" id="username" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                <label for="username" class="block text-sm font-medium text-green-500">USER ID (Username)</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    class="mt-1 block w-full px-4 py-2 bg-black text-neon border border-green-800 rounded-none focus:ring-green-500 focus:border-green-500" 
+                    required
+                    placeholder="Enter User ID"
+                >
             </div>
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                <label for="password" class="block text-sm font-medium text-green-500">ENCRYPTED KEY (Password)</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="mt-1 block w-full px-4 py-2 bg-black text-neon border border-green-800 rounded-none focus:ring-green-500 focus:border-green-500" 
+                    required
+                    placeholder="Enter Encrypted Key"
+                >
             </div>
-            <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-md hover:bg-indigo-700 transition duration-150 shadow-md">Continue</button>
+            <button 
+                type="submit" 
+                class="w-full bg-green-700 text-black font-bold py-3 rounded-sm hover:bg-green-600 transition duration-150 neon-glow"
+            >
+                INITIATE AUTH FLOW
+            </button>
         </form>
 
-        <div id="biometric-mfa" class="hidden mt-8 text-center border-t pt-6">
-            <h3 id="mfa-title" class="text-xl font-bold mb-4 text-gray-800"></h3>
+        <div id="biometric-mfa" class="hidden mt-8 text-center border-t border-green-700 pt-6">
+            <h3 id="mfa-title" class="text-xl font-bold mb-4 text-neon"></h3>
             
             <div id="face-auth" class="hidden space-y-4">
-                <p class="text-sm text-gray-600">Please position your face clearly in the camera for liveness and identity check.</p>
-                <video id="webcam-stream" autoplay muted playsinline class="w-full rounded-lg border-4 border-indigo-200 hidden"></video> 
+                <p class="text-sm text-green-400">STATUS: FACE SCAN REQUIRED. MAINTAIN HEAD ANGLE.</p>
+                <video 
+                    id="webcam-stream" 
+                    autoplay 
+                    muted 
+                    playsinline 
+                    class="w-full rounded-sm border-2 border-green-500 hidden"
+                ></video> 
                 <canvas id="face-canvas" class="hidden"></canvas>
-                <button id="capture-face-btn" class="w-full bg-green-600 text-white font-semibold py-2 rounded-md hover:bg-green-700 transition duration-150">Capture & Verify Face</button>
+                <button 
+                    id="capture-face-btn" 
+                    class="w-full bg-green-500 text-black font-semibold py-2 rounded-sm hover:bg-green-400 transition duration-150"
+                >
+                    CAPTURE & VERIFY BIOMETRIC
+                </button>
             </div>
 
             <div id="fingerprint-auth" class="hidden space-y-4">
-                <p class="text-sm text-gray-600">Final Step: Click below to simulate your fingerprint scan.</p>
-                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-indigo-600 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                <p class="text-sm text-green-400">AUTHORIZATION LEVEL CRITICAL. FINGERPRINT KEY REQUIRED.</p>
+                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-green-500 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 10H1V20H7V10ZM17 4H11V20H17V4ZM23 14H19V20H23V14Z" />
                 </svg>
-                <button id="fingerprint-btn" class="w-full bg-yellow-600 text-white font-semibold py-2 rounded-md hover:bg-yellow-700 transition duration-150">Simulate Fingerprint Scan</button>
+                <button 
+                    id="fingerprint-btn" 
+                    class="w-full bg-yellow-500 text-black font-semibold py-2 rounded-sm hover:bg-yellow-400 transition duration-150"
+                >
+                    INITIATE FINGERPRINT SCAN
+                </button>
             </div>
         </div>
         
-        <p id="message" class="mt-4 text-center text-sm font-medium h-6"></p>
+        <p id="message" class="mt-4 text-center text-sm font-medium h-6 text-green-400"></p>
     </div>
 
     <script src="/static/js/login.js"></script>
