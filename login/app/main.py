@@ -12,6 +12,31 @@ from .auth import (
     check_for_spoofing, recognize_face, verify_fingerprint,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
+# --- NEW SECURITY IMPORTS ---
+from pydantic import BaseModel, Field
+
+# --- INPUT VALIDATION & SANITIZATION FUNCTIONS ---
+
+# Although OAuth2PasswordRequestForm is used, defining a Pydantic model for security documentation
+# and potential manual validation is still good practice.
+class LoginInput(BaseModel):
+    # Set max length to prevent simple buffer attacks
+    username: str = Field(..., max_length=100)
+    # Passwords should have a min/max length
+    password: str = Field(..., min_length=8, max_length=200)
+
+def sanitize_input(text: str) -> str:
+    """Removes leading/trailing whitespace and prevents HTML/XSS injection 
+    by replacing < and > characters.
+    """
+    # 1. Clean whitespace
+    sanitized = text.strip()
+    # 2. Sanitize against XSS/HTML injection (encoding dangerous characters)
+    sanitized = sanitized.replace('<', '&lt;').replace('>', '&gt;')
+    
+    return sanitized
+
+# --- END INPUT VALIDATION & SANITIZATION ---
 
 app = FastAPI()
 
@@ -44,13 +69,24 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     Step 1: Standard Username/Password Authentication and Role Check.
     Determines the required next factor based on role.
     """
-    user = get_user(form_data.username)
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    
+    # --- APPLY SANITIZATION HERE (Security Measure: Input Validation & Sanitization) ---
+    sanitized_username = sanitize_input(form_data.username)
+    sanitized_password = sanitize_input(form_data.password)
+    
+    # NOTE: The conceptual brute-force/rate limiting logic would go here (checking attempts before calling get_user)
+    
+    user = get_user(sanitized_username) # Use the sanitized username
+    
+    if not user or not verify_password(sanitized_password, user.hashed_password): # Use the sanitized password
+        # NOTE: The conceptual brute-force logic would increment failed attempts here
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # NOTE: The conceptual brute-force logic would clear the failed attempts here
 
     # Role-Aware Authentication Logic
     if user.role in ["soldier", "driver"]:
@@ -77,8 +113,8 @@ async def verify_face_id(user_id: str, file: UploadFile = File(...)):
     """
     user = get_user(user_id)
     if not user:
-         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-         
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
     image_bytes = await file.read()
     
     # 1. Anti-Spoofing/Liveness Check
@@ -114,7 +150,7 @@ async def verify_fingerprint_id(user_id: str):
     """
     user = get_user(user_id)
     if not user:
-         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
     if user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Fingerprint not required for this role.")
