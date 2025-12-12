@@ -8,6 +8,4 @@ class Config:
     ML_URL = os.getenv("ML_URL")
     WEATHER_API = os.getenv("WEATHER_KEY")
     TRAFFIC_API = os.getenv("TRAFFIC_KEY")
-    MAPS_KEY = os.getenv("MAPS_KEY")
-    MAPBOX_KEY = os.getenv("MAPBOX_KEY")
-    SECRET_KEY = os.getenv("SECRET_KEY")
+    SECRET_KEY = os.getenv("SECRET_KEY", "defaultsecret")

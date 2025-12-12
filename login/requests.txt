@@ -7,3 +7,4 @@ dlib
 face-recognition
 opencv-python
 Pillow
+python-multipart

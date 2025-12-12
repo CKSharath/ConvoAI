@@ -1,4 +1,5 @@
 # app/main.py
+from typing import Union
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
@@ -37,7 +38,7 @@ async def serve_login_page():
 
 # --- API Endpoints ---
 
-@app.post("/token", response_model=Token | dict)
+@app.post("/token", response_model=Union[Token, dict])
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Step 1: Standard Username/Password Authentication and Role Check.
@@ -69,7 +70,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         return {"next_step": "mfa_face_fingerprint", "user_id": user.username, "role": user.role}
 
 
-@app.post("/mfa/face_verify", response_model=Token | dict)
+@app.post("/mfa/face_verify", response_model=Union[Token, dict])
 async def verify_face_id(user_id: str, file: UploadFile = File(...)):
     """
     Step 2: Face Recognition and Anti-Spoofing Check.

@@ -1,11 +1,9 @@
 from fastapi import FastAPI
-from app.routes import mission, convoy, hazards, auth, routing, biometric
+from app.routes import mission, convoy, hazards, auth, routing, biometric, summarizer
 from app.sockets import tracker
 from app.database import Base, engine
 from app import models
 from app.routes.auth import seed_demo_users, get_db
-from app.routes import sos_and_reports  # or the file name you used
-
 
 Base.metadata.create_all(bind=engine)
 
@@ -22,8 +20,8 @@ app.include_router(mission.router)
 app.include_router(hazards.router)
 app.include_router(convoy.router)
 app.include_router(routing.router)
+app.include_router(summarizer.router)   # ✅ ADD THIS
 app.include_router(tracker.router)
-app.include_router(sos_and_reports.router)
 
 @app.get("/")
 def home():
