@@ -1,0 +1,99 @@
+.navbar {
+    height: 64px;
+    background: #0f1c0f;
+    border-bottom: 1px solid rgba(0, 255, 65, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+}
+
+.navbar-inner {
+    width: 100%;
+    max-width: 1200px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* BRAND */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #00ff41, #0a3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #001205;
+    font-weight: 900;
+}
+
+.brand-text {
+    color: #00ff41;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+/* NAV LINKS */
+.nav-links a {
+    margin: 0 14px;
+    text-decoration: none;
+    color: #c8ffd0;
+    font-size: 14px;
+    opacity: 0.85;
+    padding-bottom: 6px;
+}
+
+.nav-links a.active {
+    color: #00ff41;
+    border-bottom: 2px solid #00ff41;
+}
+
+.nav-links a:hover {
+    color: #00ff41;
+}
+
+/* RIGHT */
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+/* SOS */
+.sos-btn {
+    background: #ff2a2a;
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 14px rgba(255, 50, 50, 0.8);
+}
+
+.sos-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 22px rgba(255, 50, 50, 1);
+}
+
+/* PROFILE */
+.profile-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #dfffe0;
+    padding: 8px 10px;
+    border-radius: 6px;
+}
