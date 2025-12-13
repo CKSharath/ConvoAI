@@ -1,0 +1,177 @@
+# app/main.py
+from typing import Union
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordRequestForm
+from pathlib import Path
+from datetime import timedelta
+from .models import UserInDB, Token
+from .auth import (
+    verify_password, get_user, create_access_token,
+    check_for_spoofing, recognize_face, verify_fingerprint,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
+# --- NEW SECURITY IMPORTS ---
+from pydantic import BaseModel, Field
+
+# --- INPUT VALIDATION & SANITIZATION FUNCTIONS ---
+
+# Although OAuth2PasswordRequestForm is used, defining a Pydantic model for security documentation
+# and potential manual validation is still good practice.
+class LoginInput(BaseModel):
+    # Set max length to prevent simple buffer attacks
+    username: str = Field(..., max_length=100)
+    # Passwords should have a min/max length
+    password: str = Field(..., min_length=8, max_length=200)
+
+def sanitize_input(text: str) -> str:
+    """Removes leading/trailing whitespace and prevents HTML/XSS injection 
+    by replacing < and > characters.
+    """
+    # 1. Clean whitespace
+    sanitized = text.strip()
+    # 2. Sanitize against XSS/HTML injection (encoding dangerous characters)
+    sanitized = sanitized.replace('<', '&lt;').replace('>', '&gt;')
+    
+    return sanitized
+
+# --- END INPUT VALIDATION & SANITIZATION ---
+
+app = FastAPI()
+from fastapi.responses import FileResponse
+
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    return FileResponse(Path("static") / "index.html")
+# --- Static File Setup (Requires 'static' folder to be in the project root) ---
+app.mount(
+    "/static", 
+    StaticFiles(directory=Path("static")), 
+    name="static"
+)
+
+# Root route to serve the index.html
+@app.get("/", response_class=HTMLResponse)
+async def serve_login_page():
+    index_file_path = Path("static") / "index.html"
+    if not index_file_path.is_file():
+        # Make sure you run 'uvicorn main:app --app-dir app' from the project root
+        return HTMLResponse("<h1>404: Frontend (index.html) not found. Check static folder setup.</h1>", status_code=404)
+        
+    with open(index_file_path, "r") as f:
+        html_content = f.read()
+        
+    return HTMLResponse(content=html_content)
+
+
+# --- API Endpoints ---
+
+@app.post("/token", response_model=Union[Token, dict])
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    Step 1: Standard Username/Password Authentication and Role Check.
+    Determines the required next factor based on role.
+    """
+    
+    # --- APPLY SANITIZATION HERE (Security Measure: Input Validation & Sanitization) ---
+    sanitized_username = sanitize_input(form_data.username)
+    sanitized_password = sanitize_input(form_data.password)
+    
+    # NOTE: The conceptual brute-force/rate limiting logic would go here (checking attempts before calling get_user)
+    
+    user = get_user(sanitized_username) # Use the sanitized username
+    
+    if not user or not verify_password(sanitized_password, user.hashed_password): # Use the sanitized password
+        # NOTE: The conceptual brute-force logic would increment failed attempts here
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # NOTE: The conceptual brute-force logic would clear the failed attempts here
+
+    # Role-Aware Authentication Logic
+    if user.role in ["soldier", "driver"]:
+        # Role requires only password. Grant token immediately.
+        access_token = create_access_token(
+            data={"sub": user.username, "role": user.role},
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        )
+        return Token(access_token=access_token, token_type="bearer", role=user.role)
+    
+    elif user.role == "officer":
+        # Officer requires Face MFA.
+        return {"next_step": "mfa_face", "user_id": user.username, "role": user.role}
+        
+    elif user.role == "admin":
+        # Admin requires Face + Fingerprint MFA.
+        return {"next_step": "mfa_face_fingerprint", "user_id": user.username, "role": user.role}
+
+
+@app.post("/mfa/face_verify", response_model=Union[Token, dict])
+async def verify_face_id(user_id: str, file: UploadFile = File(...)):
+    """
+    Step 2: Face Recognition and Anti-Spoofing Check.
+    """
+    user = get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+    image_bytes = await file.read()
+    
+    # 1. Anti-Spoofing/Liveness Check
+    if not check_for_spoofing(image_bytes):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Liveness check failed. Denied.")
+        
+    # 2. Face Recognition Check
+    if not user.face_encoding or not recognize_face(user_id, image_bytes):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Face recognition failed. Denied.")
+        
+    # 3. Check Role for Next Factor
+    if user.role == "officer":
+        # Officer's login is complete. Grant token.
+        access_token = create_access_token(
+            data={"sub": user.username, "role": user.role},
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        )
+        return Token(access_token=access_token, token_type="bearer", role=user.role)
+
+    elif user.role == "admin":
+        # Admin needs the next step: Fingerprint.
+        return {"next_step": "mfa_fingerprint", "user_id": user.username, "role": user.role}
+    
+    # Should not happen
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid flow")
+
+
+@app.post("/mfa/fingerprint_verify", response_model=Token)
+async def verify_fingerprint_id(user_id: str):
+    """
+    Step 3: Fingerprint Verification (Only triggered for Admin).
+    In a real scenario, the client sends a WebAuthn signature or similar secure data here.
+    """
+    user = get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    if user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Fingerprint not required for this role.")
+
+    # 1. Fingerprint Check (Placeholder)
+    if not verify_fingerprint(user_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Fingerprint verification failed. Denied.")
+        
+    # Admin's login is complete. Grant token.
+    access_token = create_access_token(
+        data={"sub": user.username, "role": user.role},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return Token(access_token=access_token, token_type="bearer", role=user.role)
+@app.get("/{full_path:path}", response_class=HTMLResponse)
+async def serve_react_app(full_path: str):
+    index_file_path = Path("static") / "index.html"
+    if index_file_path.exists():
+        return HTMLResponse(index_file_path.read_text())
+    return HTMLResponse("Frontend not built", status_code=404)
